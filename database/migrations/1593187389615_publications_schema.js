@@ -7,6 +7,8 @@ class PublicationsSchema extends Schema {
   up () {
     this.createIfNotExists('publications', (table) => {
       table.increments()
+      table.string('description', 800).notNullable()
+      table.integer('vehicle_id').unsigned().references('id').inTable('vehicles').onDelete('set null')
       table.timestamps()
     })
   }

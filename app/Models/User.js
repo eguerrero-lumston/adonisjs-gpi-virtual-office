@@ -36,15 +36,15 @@ class User extends Model {
   }
 
   /**
-   * A relationship on roles is required for auth to
-   * work. Since features like `roles` will be saved inside the
-   * roles table.
+   * A relationship on permissions is required for auth to
+   * work. Since features like `permissions` will be saved inside the
+   * permissions table.
    *
-   * @method roles
+   * @method permissions
    *
    * @return {Object}
    */
-  roles () {
+  permissions () {
     return this.hasMany('App/Models/Rol')
   }
 }

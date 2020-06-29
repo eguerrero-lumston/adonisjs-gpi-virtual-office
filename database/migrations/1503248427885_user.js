@@ -12,6 +12,7 @@ class UserSchema extends Schema {
       table.string('email', 100).notNullable().unique()
       table.string('phone', 254).notNullable().unique()
       table.string('password', 60).notNullable()
+      table.integer('rol_id').unsigned().references('id').inTable('roles').onDelete('set null')
       table.timestamps()
     })
   }
