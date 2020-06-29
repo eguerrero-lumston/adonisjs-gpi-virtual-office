@@ -1,1 +1,0 @@
-# adonisjs-gpi-virtual-office
