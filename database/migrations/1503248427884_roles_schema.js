@@ -5,8 +5,9 @@ const Schema = use('Schema')
 
 class RolesSchema extends Schema {
   up () {
-    this.createIfNotExists('roles', (table) => {
+    this.create('roles', (table) => {
       table.increments()
+      table.boolean('alive').notNullable().defaultTo(true)
       table.string('name', 254).notNullable().unique()
       table.timestamps()
     })

@@ -7,6 +7,9 @@ class PermissionsSchema extends Schema {
   up () {
     this.create('permissions', (table) => {
       table.increments()
+      table.boolean('alive').notNullable().defaultTo(true)
+      table.string('name', 80).notNullable()
+      table.integer('value').notNullable().defaultTo(0)
       table.timestamps()
     })
   }

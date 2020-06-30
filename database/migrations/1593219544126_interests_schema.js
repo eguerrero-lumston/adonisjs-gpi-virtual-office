@@ -5,16 +5,18 @@ const Schema = use('Schema')
 
 class InterestsSchema extends Schema {
   up () {
-    this.create('interests', (table) => {
+    this.create('lead_vehicle', (table) => {
       table.increments()
-      table.integer('lead_id').unsigned().references('id').inTable('leads').onDelete('set null')
-      table.integer('vehicle_id').unsigned().references('id').inTable('vehicles').onDelete('set null')
+      table.boolean('alive').notNullable().defaultTo(true)
+      table.integer('lead_id').unsigned().references('id').inTable('leads')
+      table.integer('vehicle_id').unsigned().references('id').inTable('vehicles')
+      table.integer('status').notNullable().defaultTo(0)
       table.timestamps()
     })
   }
 
   down () {
-    this.drop('interests')
+    this.drop('lead_vehicle')
   }
 }
 

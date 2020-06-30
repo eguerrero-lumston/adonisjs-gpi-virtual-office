@@ -12,8 +12,8 @@
     "adonisjs",
     "adonis-app"
   ],
-  "author": "",
-  "license": "UNLICENSED",
+  "author": "Erick",
+  "license": "MT",
   "private": true,
   "dependencies": {
     "@adonisjs/ace": "^5.0.8",

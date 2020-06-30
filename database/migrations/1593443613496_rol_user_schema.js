@@ -7,8 +7,8 @@ class RolUserSchema extends Schema {
   up () {
     this.create('rol_users', (table) => {
       table.increments()
-      table.integer('user_id').unsigned().references('id').inTable('users').onDelete('set null')
-      table.integer('permission_id').unsigned().references('id').inTable('permissions').onDelete('set null')
+      table.integer('user_id').unsigned().references('id').inTable('users')
+      table.integer('permission_id').unsigned().references('id').inTable('permissions')
       table.timestamps()
     })
   }

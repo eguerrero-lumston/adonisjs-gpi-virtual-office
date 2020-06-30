@@ -45,7 +45,11 @@ class User extends Model {
    * @return {Object}
    */
   permissions () {
-    return this.hasMany('App/Models/Rol')
+    return this.hasMany('App/Models/Permission')
+  }
+
+  rol () {
+    return this.hasOne('App/Models/Rol')
   }
 }
 

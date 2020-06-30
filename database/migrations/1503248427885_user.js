@@ -5,14 +5,15 @@ const Schema = use('Schema')
 
 class UserSchema extends Schema {
   up () {
-    this.createIfNotExists('users', (table) => {
+    this.create('users', (table) => {
       table.increments()
+      table.boolean('alive').notNullable().defaultTo(true)
       table.string('fullname', 80).notNullable()
       table.string('username', 80).notNullable().unique()
       table.string('email', 100).notNullable().unique()
       table.string('phone', 254).notNullable().unique()
       table.string('password', 60).notNullable()
-      table.integer('rol_id').unsigned().references('id').inTable('roles').onDelete('set null')
+      table.integer('rol_id').unsigned().references('id').inTable('roles')
       table.timestamps()
     })
   }

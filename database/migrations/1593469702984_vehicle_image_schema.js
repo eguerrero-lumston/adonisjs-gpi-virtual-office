@@ -3,20 +3,20 @@
 /** @type {import('@adonisjs/lucid/src/Schema')} */
 const Schema = use('Schema')
 
-class PublicationsSchema extends Schema {
+class VehicleImageSchema extends Schema {
   up () {
-    this.create('publications', (table) => {
+    this.create('vehicle_images', (table) => {
       table.increments()
       table.boolean('alive').notNullable().defaultTo(true)
-      table.string('description', 800).notNullable()
+      table.string('url', 254).notNullable()
       table.integer('vehicle_id').unsigned().references('id').inTable('vehicles')
       table.timestamps()
     })
   }
 
   down () {
-    this.drop('publications')
+    this.drop('vehicle_images')
   }
 }
 
-module.exports = PublicationsSchema
+module.exports = VehicleImageSchema
