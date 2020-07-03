@@ -7,6 +7,10 @@ const Hash = use('Hash')
 const Model = use('Model')
 
 class User extends Model {
+  static get Serializer () {
+    return use('App/Models/Serializers/JsonSerializer')
+  }
+  
   static boot () {
     super.boot()
 

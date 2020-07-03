@@ -26,15 +26,21 @@ class UserController {
     try {
       if (await auth.attempt(email, password)) {
         let user = await User.findBy('email', email)
-        let token = await auth.generate(user)
+        user.permissions()
+        // let token = await auth.generate(user)
+        let token = await auth
+          .withRefreshToken()
+          .generate(user)
+        // Object.assign(user, token)
 
-        Object.assign(user, token)
-        return response.json(user)
+        let data = {
+          user: user,
+          token: token
+        }
+        
+        return response.json(genericResponse.success(data, "Se obtuvo el usuario correctamente"))
       }
-
-
-    }
-    catch (e) {
+    } catch (e) {
       console.log(e)
       return response.json({message: 'You are not registered!'})
     }
@@ -51,7 +57,14 @@ class UserController {
    * @param {View} ctx.view
    */
   async index ({ request, response, view }) {
-    const users = await User.all()
+    const page = request.only(['page']) || 1
+    const limit = request.only(['limit']) || 20
+
+    const users = await User
+                        .query()
+                        .where('alive', 1)
+                        .with('permissions')
+                        .paginate(page, limit)
     
     console.log('genericResponse', genericResponse )
     response.status(200).send(genericResponse.success(users, "Se obtuvieron los usuarios correctamente"))
@@ -66,12 +79,15 @@ class UserController {
    * @param {Response} ctx.response
    */
   async store ({ request, response, auth }) {
-    
     const values = request.only(['email', 'username', 'password' ,'fullname', ,'phone'])
     values.rol_id = 1
     const permissions = request.only(['permissions'])
     const user = await User.create(values)
-    
+    for (const element of permissions) {
+      user.permissions().create({ 'permission_id': permissions })
+    }
+    await user.save()
+
     console.log('values', values)
     let token = await auth
       .withRefreshToken()
@@ -95,6 +111,10 @@ class UserController {
    * @param {View} ctx.view
    */
   async show ({ params, request, response, view }) {
+    let id = params.id 
+    const user = await User.query().with('permissions').where('id', id).first()
+    
+    return response.json(genericResponse.success(user, "Se obtuvo el usuario correctamente"))
   }
 
   /**
@@ -106,6 +126,17 @@ class UserController {
    * @param {Response} ctx.response
    */
   async update ({ params, request, response }) {
+    const values = request.only(['email', 'fullname', ,'phone'])
+    const permissions = request.only(['permissions'])
+    let id = params.id
+    const user = await User.find(id)
+    for (const element of permissions) {
+      user.permissions().create({ 'permission_id': permissions })
+    }
+    user.merge(values)
+    await user.save()
+    // user.fill
+    return response.json(genericResponse.success(user, "Se actualizo el usuario correctamente"))
   }
 
   /**
@@ -117,6 +148,10 @@ class UserController {
    * @param {Response} ctx.response
    */
   async destroy ({ params, request, response }) {
+    await User.find(params.id).delete()
+
+    return response.json({message: 'Post has been deleted'})
+
   }
 }
 

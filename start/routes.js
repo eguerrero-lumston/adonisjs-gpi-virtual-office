@@ -20,7 +20,7 @@ Route.on('/').render('welcome')
 Route.group(() => {
     Route.resource('users', 'UserController')
         .middleware(new Map([
-            [[ 'update', 'destroy'], ['auth']]
+            [[ 'show', 'index', 'update', 'destroy'], ['auth']]
         ]))
         .validator(new Map([
             [['users.store'], ['StoreUser']],

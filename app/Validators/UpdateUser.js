@@ -1,16 +1,14 @@
 'use strict'
-
 const genericResponse = use("App/Utils/GenericResponse");
 
-class StoreUser {
+class UpdateUser {
   get rules () {
+    const userId = this.ctx.params.id
     return {
-      email: 'required|email|unique:users',
-      password: 'required',
+      email: `required|email|unique:users,email,id,${userId}`,
       fullname: 'required',
-      permissions: 'required',
-      username: 'required|unique:users',
-      phone: 'required|integer|unique:users'
+      permissions: 'required|array',
+      phone: `required|integer|unique:users,phone,id,${userId}`
     }
   }
   get messages () {
@@ -43,4 +41,4 @@ class StoreUser {
 	}
 }
 
-module.exports = StoreUser
+module.exports = UpdateUser

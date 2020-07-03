@@ -4,6 +4,9 @@
 const Model = use('Model')
 
 class Seller extends Model {
+    static get Serializer () {
+        return use('App/Models/Serializers/JsonSerializer')
+    }
     contracts() {
         return this.hasMany('App/Models/Contract')
     }
