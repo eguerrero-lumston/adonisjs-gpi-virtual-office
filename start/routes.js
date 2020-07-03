@@ -17,3 +17,18 @@
 const Route = use('Route')
 
 Route.on('/').render('welcome')
+Route.group(() => {
+    Route.resource('users', 'UserController')
+        .middleware(new Map([
+            [[ 'update', 'destroy'], ['auth']]
+        ]))
+        .validator(new Map([
+            [['users.store'], ['StoreUser']],
+            [['users.update'], ['UpdateUser']]
+        ]))
+        .apiOnly()
+    Route.post('users/login', 'UserController.login')
+
+}).prefix('api/v1')
+
+

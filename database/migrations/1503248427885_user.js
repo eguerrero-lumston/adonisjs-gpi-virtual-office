@@ -14,6 +14,8 @@ class UserSchema extends Schema {
       table.string('phone', 254).notNullable().unique()
       table.string('password', 60).notNullable()
       table.integer('rol_id').unsigned().references('id').inTable('roles')
+      table.string('type', 60).notNullable().defaultTo('office')
+      // table.string('permissions', 60).notNullable()
       table.timestamps()
     })
   }

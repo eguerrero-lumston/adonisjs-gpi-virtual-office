@@ -4,6 +4,9 @@
 const Model = use('Model')
 
 class Publication extends Model {
+    vehicle() {
+        return this.hasMany('App/Models/Lead')
+    }
 }
 
 module.exports = Publication
