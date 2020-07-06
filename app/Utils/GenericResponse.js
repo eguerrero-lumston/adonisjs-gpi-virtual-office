@@ -29,10 +29,9 @@ class GenericResponse {
     error(error, message = "error") {
         let errorMessage = message;
 
-        if(error.errors) {
+        if(error != null && error.errors) {
             for (const key in error.errors) {
                 errorMessage = error.errors[key].message;
-
                 break;
             }
         }
@@ -42,7 +41,6 @@ class GenericResponse {
             error,
             data: null
         }
-
     }
 }
 const genericResponse = new GenericResponse();

@@ -52,6 +52,7 @@ class User extends Model {
    */
   permissions () {
     return this.belongsToMany('App/Models/Permission')
+      .pivotModel('App/Models/PermissionUser')
   }
 
   rol () {

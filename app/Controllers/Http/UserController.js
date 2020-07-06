@@ -5,6 +5,7 @@
 /** @typedef {import('@adonisjs/framework/src/View')} View */
 const { validate } = use('Validator')
 const User = use('App/Models/User')
+const PermissionUser = use('App/Models/PermissionUser')
 const StoreUser = use('App/Validators/StoreUser')
 const genericResponse = use("App/Utils/GenericResponse");
 /**../../../../../
@@ -42,7 +43,7 @@ class UserController {
       }
     } catch (e) {
       console.log(e)
-      return response.json({message: 'You are not registered!'})
+      return response.json({message: 'No estas registrado!'})
     }
   }
 
@@ -81,10 +82,15 @@ class UserController {
   async store ({ request, response, auth }) {
     const values = request.only(['email', 'username', 'password' ,'fullname', ,'phone'])
     values.rol_id = 1
-    const permissions = request.only(['permissions'])
+    const permissions = request.collect(['permissions'])
     const user = await User.create(values)
     for (const element of permissions) {
-      user.permissions().create({ 'permission_id': permissions })
+      const lucidPermission = new PermissionUser()
+
+      console.log("element------->", element)
+      lucidPermission.permission_id = element.permissions
+      lucidPermission.user_id = user.id
+      user.permissions().save(lucidPermission)
     }
     await user.save()
 
@@ -92,7 +98,9 @@ class UserController {
     let token = await auth
       .withRefreshToken()
       .generate(user)
-    // Object.assign(user, token)
+
+    let permissionsColl = user.permissions()
+    Object.assign(user, permissionsColl)
     
     let data = {
       user: user,
@@ -127,13 +135,26 @@ class UserController {
    */
   async update ({ params, request, response }) {
     const values = request.only(['email', 'fullname', ,'phone'])
-    const permissions = request.only(['permissions'])
+    const permissions = request.collect(['permissions'])
     let id = params.id
-    const user = await User.find(id)
-    for (const element of permissions) {
-      user.permissions().create({ 'permission_id': permissions })
+    const user = await User.query().with('permissions').where('id', id).first()
+    // console.log("permissions", permissions)
+    if (permissions.length) {
+      // await user.permissions().detach()
+      for (const element of permissions) {
+        const lucidPermission = await PermissionUser.findOrCreate(
+          { permission_id: element.permissions, user_id: user.id},
+          { permission_id: element.permissions, user_id: user.id }
+        )
+        // lucidPermission
+        // console.log("element------->", element)
+        // lucidPermission.permission_id = element.permissions
+        // lucidPermission.user_id = user.id
+        // user.permissions().save(lucidPermission)
+      }
     }
     user.merge(values)
+
     await user.save()
     // user.fill
     return response.json(genericResponse.success(user, "Se actualizo el usuario correctamente"))
@@ -148,10 +169,15 @@ class UserController {
    * @param {Response} ctx.response
    */
   async destroy ({ params, request, response }) {
-    await User.find(params.id).delete()
+    try {
+      let user = await User.find(params.id)
+      user.delete()
 
-    return response.json({message: 'Post has been deleted'})
-
+      return response.json(genericResponse.success(null, 'Se ha eliminado con exito'))
+    } catch (e) {
+      console.log(e)
+      return response.json(genericResponse.error(e, 'No existe el usuario!'))
+    }
   }
 }
 

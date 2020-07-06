@@ -13,7 +13,7 @@ class UserSchema extends Schema {
       table.string('email', 100).notNullable().unique()
       table.string('phone', 254).notNullable().unique()
       table.string('password', 60).notNullable()
-      table.integer('rol_id').unsigned().references('id').inTable('roles')
+      table.integer('rol_id').unsigned().references('id').inTable('rols')
       table.string('type', 60).notNullable().defaultTo('office')
       // table.string('permissions', 60).notNullable()
       table.timestamps()
