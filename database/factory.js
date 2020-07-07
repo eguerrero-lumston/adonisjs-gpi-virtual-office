@@ -25,7 +25,7 @@ Factory.blueprint('App/Models/User', (faker) => {
   }
 })
 
-Factory.blueprint('rols', (faker, i, data) =>  {
+Factory.blueprint('App/Models/Rol', (faker, i, data) =>  {
     return {
         name: data.name
     }

@@ -1,6 +1,6 @@
 'use strict'
 
-const genericResponse = use("App/Utils/GenericResponse");
+const genericResponse = use("App/Utils/GenericResponse")
 
 class StoreUser {
   get rules () {

@@ -20,7 +20,7 @@ Route.on('/').render('welcome')
 Route.group(() => {
     Route.resource('users', 'UserController')
         .middleware(new Map([
-            [[ 'show', 'index', 'update', 'destroy'], ['auth']]
+            [[ 'show', 'create', 'index', 'update', 'destroy'], ['auth']]
         ]))
         .validator(new Map([
             [['users.store'], ['StoreUser']],
@@ -29,6 +29,15 @@ Route.group(() => {
         .apiOnly()
     Route.post('users/login', 'UserController.login')
 
+    Route.resource('leads', 'LeadController')
+        .middleware(new Map([
+            [[ 'show', 'store', 'index', 'update', 'destroy'], ['auth']]
+        ]))
+        .validator(new Map([
+            [['leads.store'], ['StoreLead']],
+            [['leads.update'], ['UpdateLead']]
+        ]))
+        .apiOnly()
 }).prefix('api/v1')
 
 

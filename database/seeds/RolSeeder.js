@@ -16,13 +16,11 @@ const Factory = use('Factory')
 class RolSeeder {
   async run () {
     const rol1 = await Factory
-          .get('rols')
-          .table('rols')
+          .model('App/Models/Rol')
           .create({ name: 'Admin' })
 
     const rol2 = await Factory
-          .get('rols')
-          .table('rols')
+          .model('App/Models/Rol')
           .create({ name : 'Office' })
 
     // console.log(rolsArray)

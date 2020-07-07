@@ -3,11 +3,11 @@
 /** @typedef {import('@adonisjs/framework/src/Request')} Request */
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
 /** @typedef {import('@adonisjs/framework/src/View')} View */
-const { validate } = use('Validator')
 const User = use('App/Models/User')
+const Hash = use('Hash')
+
 const PermissionUser = use('App/Models/PermissionUser')
-const StoreUser = use('App/Validators/StoreUser')
-const genericResponse = use("App/Utils/GenericResponse");
+const genericResponse = use("App/Utils/GenericResponse")
 /**../../../../../
  * Resourceful controller for interacting with users
  */
@@ -67,7 +67,7 @@ class UserController {
                         .with('permissions')
                         .paginate(page, limit)
     
-    console.log('genericResponse', genericResponse )
+    // console.log('genericResponse', genericResponse )
     response.status(200).send(genericResponse.success(users, "Se obtuvieron los usuarios correctamente"))
   }
 
@@ -82,25 +82,29 @@ class UserController {
   async store ({ request, response, auth }) {
     const values = request.only(['email', 'username', 'password' ,'fullname', ,'phone'])
     values.rol_id = 1
-    const permissions = request.collect(['permissions'])
+    const { permissions } = request.only(['permissions'])
     const user = await User.create(values)
+    if (vehicles != null && vehicles.length) {
     for (const element of permissions) {
-      const lucidPermission = new PermissionUser()
-
-      console.log("element------->", element)
-      lucidPermission.permission_id = element.permissions
-      lucidPermission.user_id = user.id
-      user.permissions().save(lucidPermission)
+        // await PermissionUser.findOrCreate(
+        //   { permission_id: element, user_id: user.id },
+        //   { permission_id: element, user_id: user.id }
+        // )
+        const lucidPermission = new PermissionUser()
+        lucidPermission.permission_id = element
+        lucidPermission.user_id = user.id
+        user.permissions().save(lucidPermission)
+      }
     }
     await user.save()
 
-    console.log('values', values)
+    // console.log('values', values)
     let token = await auth
       .withRefreshToken()
       .generate(user)
 
-    let permissionsColl = user.permissions()
-    Object.assign(user, permissionsColl)
+    let permissionsColl = await user.permissions().fetch()
+    user.permissions = permissionsColl.toJSON()
     
     let data = {
       user: user,
@@ -134,29 +138,21 @@ class UserController {
    * @param {Response} ctx.response
    */
   async update ({ params, request, response }) {
-    const values = request.only(['email', 'fullname', ,'phone'])
-    const permissions = request.collect(['permissions'])
+    const values = request.only(['email', 'fullname', ,'phone', 'username'])
+    let { permissions } = request.only('permissions')
     let id = params.id
-    const user = await User.query().with('permissions').where('id', id).first()
-    // console.log("permissions", permissions)
-    if (permissions.length) {
-      // await user.permissions().detach()
-      for (const element of permissions) {
-        const lucidPermission = await PermissionUser.findOrCreate(
-          { permission_id: element.permissions, user_id: user.id},
-          { permission_id: element.permissions, user_id: user.id }
-        )
-        // lucidPermission
-        // console.log("element------->", element)
-        // lucidPermission.permission_id = element.permissions
-        // lucidPermission.user_id = user.id
-        // user.permissions().save(lucidPermission)
-      }
+    var user = await User.query().where('id', id).first()
+    await user.permissions().pivotQuery().whereNotIn('permission_id', permissions).delete()
+    for (const element of permissions) {
+      await PermissionUser.findOrCreate(
+        { permission_id: element, user_id: user.id },
+        { permission_id: element, user_id: user.id }
+      )
     }
     user.merge(values)
-
     await user.save()
-    // user.fill
+    let permissionsColl = await user.permissions().fetch()
+    user.permissions = permissionsColl.toJSON()
     return response.json(genericResponse.success(user, "Se actualizo el usuario correctamente"))
   }
 
@@ -179,6 +175,34 @@ class UserController {
       return response.json(genericResponse.error(e, 'No existe el usuario!'))
     }
   }
+
+  async changePassword ({ request, auth, response }) {
+    // get currently authenticated user
+    const user = auth.current.user
+
+    // verify if current password matches
+    const verifyPassword = await Hash.verify(
+        request.input('password'),
+        user.password
+    )
+
+    // display appropriate message
+    if (!verifyPassword) {
+        return response.status(400).json({
+            status: 'error',
+            message: 'Current password could not be verified! Please try again.'
+        })
+    }
+
+    // hash and save new password
+    user.password = await Hash.make(request.input('newPassword'))
+    await user.save()
+
+    return response.json({
+        status: 'success',
+        message: 'Password updated!'
+    })
+}
 }
 
 module.exports = UserController
