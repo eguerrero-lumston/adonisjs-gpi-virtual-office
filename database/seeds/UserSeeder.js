@@ -16,6 +16,10 @@ const Database = use('Database')
 
 class UserSeeder {
   async run () {
+    const rola = await Factory
+      .model('App/Models/Rol')
+      .create()
+
     const usersArray = await Factory
       .model('App/Models/User')
       .createMany(5)

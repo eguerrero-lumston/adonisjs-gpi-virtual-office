@@ -30,14 +30,24 @@ Route.group(() => {
     Route.post('users/login', 'UserController.login')
 
     Route.resource('leads', 'LeadController')
-        .middleware(new Map([
-            [[ 'show', 'store', 'index', 'update', 'destroy'], ['auth']]
-        ]))
+        .middleware([ 'auth', 'isAdmin' ])
         .validator(new Map([
             [['leads.store'], ['StoreLead']],
             [['leads.update'], ['UpdateLead']]
         ]))
         .apiOnly()
+
+    Route.resource('vehicles', 'VehicleController')
+        .middleware([ 'auth' ])
+        .validator(new Map([
+            [['vehicles.store'], ['StoreVehicle']],
+            [['vehicles.update'], ['UpdateVehicle']]
+        ]))
+        .apiOnly()
+    Route.get('brands', 'VehicleController.getBrands')
 }).prefix('api/v1')
 
 
+// .middleware(new Map([
+//     [[ 'show', 'store', 'index', 'update', 'destroy'], ['auth']]
+// ]))

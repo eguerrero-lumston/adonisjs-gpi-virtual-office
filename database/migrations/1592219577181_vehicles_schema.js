@@ -11,6 +11,7 @@ class VehiclesSchema extends Schema {
       table.string('brand', 254).notNullable()
       table.string('model', 254).notNullable()
       table.bigInteger('mileage').notNullable().defaultTo(0)
+      table.enu('origin', ['gpi', 'lotero']).defaultTo('gpi')
       // table.integer('fuel_id').unsigned().references('id').inTable('fuels') //pending
       table.enu('fuel', ['gasolina', 'electrico'])
 

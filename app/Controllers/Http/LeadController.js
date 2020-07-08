@@ -6,7 +6,8 @@
 
 const { validate } = use('Validator')
 const Lead = use('App/Models/Lead')
-const genericResponse = use("App/Utils/GenericResponse");
+const genericResponse = use("App/Utils/GenericResponse")
+const _ = use('lodash')
 
 /**
  * Resourceful controller for interacting with leads
@@ -43,9 +44,8 @@ class LeadController {
    * @param {Response} ctx.response
    */
   async store ({ request, response }) {
-    const values = request.only(['fullname','phone','email','gender','birthday','zipCode','person','origin'])
-    values.zip_code = values.zipCode
-    delete values.zipCode
+    const oldvalues = request.only(['fullname','phone','email','gender','birthday','zipCode','person','origin'])
+    var values = _.mapKeys(oldvalues, (value, key) => _.snakeCase(key));
     const { vehicles } = request.only(['vehicles']) 
     const lead = await Lead.create(values)
     if (vehicles != null && vehicles.length) {
@@ -88,9 +88,11 @@ class LeadController {
    * @param {Response} ctx.response
    */
   async update ({ params, request, response }) {
-    const values = request.only(['fullname','phone','email','gender','birthday','zipCode','person','origin'])
-    values.zip_code = values.zipCode
-    delete values.zipCode
+    const oldvalues = request.only(['fullname','phone','email','gender','birthday','zipCode','person','origin'])
+    var values = _.mapKeys(oldvalues, (value, key) => _.snakeCase(key));
+    console.log('newObj: ', values);
+    // values.zip_code = values.zipCode
+    // delete values.zipCode
     let { vehicles } = request.only('vehicles')
     let id = params.id
     var lead = await Lead.query().where('id', id).first()
