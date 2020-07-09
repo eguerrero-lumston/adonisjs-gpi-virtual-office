@@ -17,10 +17,17 @@
 const Route = use('Route')
 
 Route.on('/').render('welcome')
+
+Route.group(use('App/Routes/Auth')).prefix('api/v1/auth')
+Route.group(use('App/Routes/Profile')).prefix('api/v1/profile')
+Route.group(use('App/Routes/Logs')).prefix('api/v1/logs').middleware('jwtAuth')
+
+Route.group(use('App/Routes/Vehicle')).prefix('api/v1').middleware([ 'jwtAuth' ])
+
 Route.group(() => {
     Route.resource('users', 'UserController')
         .middleware(new Map([
-            [[ 'show', 'create', 'index', 'update', 'destroy'], ['auth']]
+            [[ 'show', 'create', 'index', 'update', 'destroy'], ['jwtAuth']]
         ]))
         .validator(new Map([
             [['users.store'], ['StoreUser']],
@@ -30,7 +37,7 @@ Route.group(() => {
     Route.post('users/login', 'UserController.login')
 
     Route.resource('leads', 'LeadController')
-        .middleware([ 'auth', 'isAdmin' ])
+        .middleware([ 'jwtAuth' ])
         .validator(new Map([
             [['leads.store'], ['StoreLead']],
             [['leads.update'], ['UpdateLead']]
@@ -38,7 +45,7 @@ Route.group(() => {
         .apiOnly()
 
     Route.resource('vehicles', 'VehicleController')
-        .middleware([ 'auth' ])
+        .middleware([ 'jwtAuth' ])
         .validator(new Map([
             [['vehicles.store'], ['StoreVehicle']],
             [['vehicles.update'], ['UpdateVehicle']]
@@ -51,16 +58,6 @@ Route.group(() => {
 
 }).prefix('api/v1')
 
-Route.group(() => {
-    Route.get('models', 'VehicleController.getModels')
-    Route.get('brands', 'VehicleController.getBrands')
-    Route.get('versions', 'VehicleController.getVersions')
-    Route.get('descriptions', 'VehicleController.getDescriptions')
-    Route.post('quotation', 'VehicleController.saveQuotation')
-    Route.get('quote', 'VehicleController.getQuote')
-})
-    .prefix('api/v1')
-    .middleware([ 'auth' ])
 // .middleware(new Map([
 //     [[ 'show', 'store', 'index', 'update', 'destroy'], ['auth']]
 // ]))

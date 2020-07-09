@@ -5,7 +5,8 @@
 /** @typedef {import('@adonisjs/framework/src/View')} View */
 const User = use('App/Models/User')
 const Hash = use('Hash')
-
+const Mail = use('Mail')
+const logger = use('App/Helpers/Logger')
 const PermissionUser = use('App/Models/PermissionUser')
 const genericResponse = use("App/Utils/GenericResponse")
 /**../../../../../
@@ -80,37 +81,46 @@ class UserController {
    * @param {Response} ctx.response
    */
   async store ({ request, response, auth }) {
-    const values = request.only(['email', 'username', 'password' ,'fullname', ,'phone'])
+    const values = request.only(['email', 'username', 'password' ,'fullname', 'phone'])
     values.rol_id = 1
     const { permissions } = request.only(['permissions'])
-    const user = await User.create(values)
-    if (vehicles != null && vehicles.length) {
-    for (const element of permissions) {
-        // await PermissionUser.findOrCreate(
-        //   { permission_id: element, user_id: user.id },
-        //   { permission_id: element, user_id: user.id }
-        // )
-        const lucidPermission = new PermissionUser()
-        lucidPermission.permission_id = element
-        lucidPermission.user_id = user.id
-        user.permissions().save(lucidPermission)
+    const user = new User()
+    user.merge(values)
+    const res = await user.save()
+    if (res) {
+      if (permissions != null && permissions.length) {
+        for (const element of permissions) {
+            await PermissionUser.findOrCreate(
+              { permission_id: element, user_id: user.id },
+              { permission_id: element, user_id: user.id }
+            )
+          }
+        }
+      await Mail.send('emails.welcome', { token: (user.confirmation_token) ? user.confirmation_token : "verified" }, (message) => {
+        message.from('noreply@shop.khare.co.in')
+        message.subject('Welcome to Khare\'s Shop')
+        message.to(user.email)
+      })
+      // const result = await auth.withRefreshToken().generate(user)
+      await logger('info','User Signup', user.id, user.id, user.email)
+      // return response.status(201).json(result)
+      let token = await auth
+        .withRefreshToken()
+        .generate(user)
+
+      let permissionsColl = await user.permissions().fetch()
+      user.permissions = permissionsColl.toJSON()
+      
+      let data = {
+        user: user,
+        token: token
       }
+      return response.json(genericResponse.success(data, "Se creo correctamente"))
     }
-    await user.save()
-
     // console.log('values', values)
-    let token = await auth
-      .withRefreshToken()
-      .generate(user)
-
-    let permissionsColl = await user.permissions().fetch()
-    user.permissions = permissionsColl.toJSON()
     
-    let data = {
-      user: user,
-      token: token
-    }
-    return response.json(genericResponse.success(data, "Se creo correctamente"))
+
+    return response.status(500).json(genericResponse.error(null, 'Algo salió mal. Intenta nuevamente o contacta al administrador.'))
   }
 
   /**

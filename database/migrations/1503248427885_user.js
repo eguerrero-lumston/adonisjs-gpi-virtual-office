@@ -7,6 +7,7 @@ class UserSchema extends Schema {
   up () {
     this.create('users', (table) => {
       table.increments()
+      table.string('uid').notNullable()
       table.boolean('alive').notNullable().defaultTo(true)
       table.string('fullname', 80).notNullable()
       table.string('username', 80).notNullable().unique()
@@ -15,7 +16,13 @@ class UserSchema extends Schema {
       table.string('password', 60).notNullable()
       table.integer('rol_id').unsigned().references('id').inTable('rols')
       table.string('type', 60).notNullable().defaultTo('office')
-      // table.string('permissions', 60).notNullable()
+      
+      table.string('role')
+      table.string('provider').notNullable()
+      table.boolean('verified').defaultTo(false)
+      table.string('confirmation_token')
+      table.string('reset_token')
+      table.boolean('banned')
       table.timestamps()
     })
   }

@@ -7,8 +7,8 @@ class PermissionUserSchema extends Schema {
   up () {
     this.create('permission_users', (table) => {
       table.increments()
-      table.integer('permission_id').unsigned().references('id').inTable('permissions')
-      table.integer('user_id').unsigned().references('id').inTable('users')
+      table.integer('permission_id').unsigned().references('id').inTable('permissions').onDelete('CASCADE') //.onDelete('set null')
+      table.integer('user_id').unsigned().references('id').inTable('users').onDelete('CASCADE') //.onDelete('set null')
       table.timestamps()
     })
   }

@@ -18,11 +18,14 @@ class User extends Model {
      * A hook to hash the user password before saving
      * it to the database.
      */
-    this.addHook('beforeSave', async (userInstance) => {
-      if (userInstance.dirty.password) {
-        userInstance.password = await Hash.make(userInstance.password)
-      }
-    })
+    // this.addHook('beforeSave', async (userInstance) => {
+    //   if (userInstance.dirty.password) {
+    //     userInstance.password = await Hash.make(userInstance.password)
+    //   }
+    // })
+
+    this.addHook('beforeCreate', ['UserHook.setDefaults', 'UserHook.hashPassword'])
+    this.addHook('afterCreate', ['UserHook.createProfile'])
   }
   static get hidden () {
     return ['password']
@@ -57,6 +60,24 @@ class User extends Model {
 
   rol () {
     return this.hasOne('App/Models/Rol')
+  }
+  
+  profile () {
+    return this.hasOne('App/Models/Profile')
+  }
+  
+  logs () {
+    return this.hasMany('App/Models/Log')
+  }
+
+  // roles
+  static get roles () {
+    return ['superadmin', 'admin', 'manager', 'moderator', 'member']
+  }
+
+  // hide fields
+  static get hidden () {
+    return ['password', 'reset_token', 'confirmation_token']
   }
 }
 
