@@ -8,7 +8,8 @@ const Drive = use('Drive')
 const Env = use('Env')
 const _ = use('lodash')
 const genericResponse = use("App/Utils/GenericResponse")
-const Request = use('Request')
+const request = use('request')
+const convert = use('xml-js')
 
 /**
  * Resourceful controller for interacting with vehicles
@@ -34,8 +35,8 @@ class VehicleController {
       if (error.message) {
         // throw new Error(error.message)
         response
-                .status(400)
-                .json(genericResponse.error(error, error.message))
+          .status(400)
+          .json(genericResponse.error(error, error.message))
       }
 
       // upload file to s3
@@ -59,7 +60,7 @@ class VehicleController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async index ({ request, response, view }) {
+  async index({ request, response, view }) {
   }
 
   /**
@@ -70,13 +71,13 @@ class VehicleController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async store ({ request, response }) {
-    const attributs = ['alive', 'brand', 'model', 'mileage', 
-      'fuel', 'year', 'owners', 'condition', 'color', 
-      'price', 'motor', 'motorDescription', 
-      'cylinders', 'performanceCity', 'performanceRoad', 
-      'tankCapacity', 'passengers', 'transmission', 'airConditioning', 
-      'abs', 'brakeAssistance', 'cdPlayer', 'usbStereo', 'electricalInsurance', 
+  async store({ request, response }) {
+    const attributs = ['alive', 'brand', 'model', 'mileage',
+      'fuel', 'year', 'owners', 'condition', 'color',
+      'price', 'motor', 'motorDescription',
+      'cylinders', 'performanceCity', 'performanceRoad',
+      'tankCapacity', 'passengers', 'transmission', 'airConditioning',
+      'abs', 'brakeAssistance', 'cdPlayer', 'usbStereo', 'electricalInsurance',
       'airbags', 'leatherSeats', 'electricWindows', 'automaticTrunk', 'cupHolder']
     const oldvalues = request.only(attributs)
     var values = _.mapKeys(oldvalues, (value, key) => _.snakeCase(key));
@@ -98,7 +99,7 @@ class VehicleController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async show ({ params, request, response, view }) {
+  async show({ params, request, response, view }) {
   }
 
   /**
@@ -109,7 +110,7 @@ class VehicleController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async update ({ params, request, response }) {
+  async update({ params, request, response }) {
   }
 
   /**
@@ -120,18 +121,18 @@ class VehicleController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async destroy ({ params, request, response }) {
+  async destroy({ params, request, response }) {
   }
-  
-  getModels({ request, response }) {
-      var xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ns="http://schemas.datacontract.org/2004/07/">
+
+  async getModels({ request, response }) {
+    var xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ns="http://schemas.datacontract.org/2004/07/">
           <soapenv:Header/>
           <soapenv:Body>
               <tem:Consulta_Modelos>
                   <tem:Datos_Autenticacion>
-                      <ns:Contrasena>${Env.get('WS_BITUAJ_PASS')}</ns:Contrasena>
-                      <ns:KeyCode>${Env.get('WS_BITUAJ_KEY')}</ns:KeyCode>
-                      <ns:Usuario>${Env.get('WS_BITUAJ_USER')}</ns:Usuario>
+                      <ns:Contrasena>${ Env.get('WS_BITUAJ_PASS')}</ns:Contrasena>
+                      <ns:KeyCode>${ Env.get('WS_BITUAJ_KEY')}</ns:KeyCode>
+                      <ns:Usuario>${ Env.get('WS_BITUAJ_USER')}</ns:Usuario>
                   </tem:Datos_Autenticacion>
                   <tem:Datos_Vehiculo>
                       <ns:Descripcion>?</ns:Descripcion>
@@ -144,32 +145,32 @@ class VehicleController {
               </tem:Consulta_Modelos>
           </soapenv:Body>
           </soapenv:Envelope>`;
+    let result = await getData(Env.get('WS_CATALAGOS_URL'), Env.get('WS_CATALAGOS_SOAP_GET_MODELS'), xml)
+    if (result.status == 1) {
+      if (result.response['s:Envelope']['s:Body']['Consulta_ModelosResponse']['Consulta_ModelosResult']['a:string'] != undefined) {
+        var data = result.response['s:Envelope']['s:Body']['Consulta_ModelosResponse']['Consulta_ModelosResult']['a:string'],
+          newData = []
 
-      getData(Env.get('WS_CATALAGOS_URL'), Env.get('WS_CATALAGOS_SOAP_GET_MODELS'), xml, (result) => {
-          if (result.status == 1) {
-              if (result.response['s:Envelope']['s:Body']['Consulta_ModelosResponse']['Consulta_ModelosResult']['a:string'] != undefined) {
-                  var data = result.response['s:Envelope']['s:Body']['Consulta_ModelosResponse']['Consulta_ModelosResult']['a:string'],
-                      newData = {
-                          model: []
-                      }
+        if (Array.isArray(data)) {
+          data.forEach(element => {
+            newData.push(element['_text']);
+          });
+        } else {
+          newData.push(data['_text']);
+        }
 
-                  if (Array.isArray(data)) {
-                      data.forEach(element => {
-                          newData.model.push(element['_text']);
-                      });
-                  } else
-                      newData.model.push(data['_text']);
-
-                  response.json({ status: 1, data: newData });
-              } else
-                  response.json({ status: 0 });
-          } else
-              response.json(result);
-      });
+        return response.json(genericResponse.success(newData, "Se obtuvieron correctamente"));
+      } else {
+        return response.json(genericResponse.error(null, "Ocurrio un error"));
+      }
+    } else {
+      return response.json(genericResponse.success(result, "datos en crudo"));
+    }
   }
 
-  getBrands({ request, response }) {
-      var xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ns="http://schemas.datacontract.org/2004/07/">
+  async getBrands({ request, response }) {
+    let { model } = request.only(['model'])
+    var xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ns="http://schemas.datacontract.org/2004/07/">
           <soapenv:Header/>
           <soapenv:Body>
           <tem:Consulta_Marcas>
@@ -182,7 +183,7 @@ class VehicleController {
                   <ns:Descripcion>?</ns:Descripcion>
                   <ns:MError>?</ns:MError>
                   <ns:Marca>?</ns:Marca>
-                  <ns:Modelo>${request.body.model}</ns:Modelo>
+                  <ns:Modelo>${ model }</ns:Modelo>
                   <ns:Tipo_Vehiculo>Auto_Particulares</ns:Tipo_Vehiculo>
                   <ns:Version>?</ns:Version>
               </tem:Datos_Vehiculo>
@@ -190,31 +191,33 @@ class VehicleController {
           </soapenv:Body>
       </soapenv:Envelope>`;
 
-      getData(Env.get('WS_CATALAGOS_URL'), Env.get('WS_CATALAGOS_SOAP_GET_BRANDS'), xml, (result) => {
-          if (result.status == 1) {
-              if (result.response['s:Envelope']['s:Body']['Consulta_MarcasResponse']['Consulta_MarcasResult']['a:string'] != undefined) {
-                  var data = result.response['s:Envelope']['s:Body']['Consulta_MarcasResponse']['Consulta_MarcasResult']['a:string'],
-                      newData = {
-                          brand: []
-                      };
+    let result = await getData(Env.get('WS_CATALAGOS_URL'), Env.get('WS_CATALAGOS_SOAP_GET_BRANDS'), xml)
+    if (result.status == 1) {
+      if (result.response['s:Envelope']['s:Body']['Consulta_MarcasResponse']['Consulta_MarcasResult']['a:string'] != undefined) {
+        var data = result.response['s:Envelope']['s:Body']['Consulta_MarcasResponse']['Consulta_MarcasResult']['a:string'],
+          newData = {
+            brand: []
+          };
 
-                  if (Array.isArray(data)) {
-                      data.forEach(element => {
-                          newData.brand.push(element['_text']);
-                      });
-                  } else
-                      newData.brand.push(data['_text']);
+        if (Array.isArray(data)) {
+          data.forEach(element => {
+            newData.brand.push(element['_text']);
+          });
+        } else {
+          newData.brand.push(data['_text'])
+        }
 
-                  response.json({ status: 1, data: newData });
-              } else
-                  response.json({ status: 0 });
-          } else
-              response.json(result);
-      });
+        response.json(genericResponse.success(newData, "Se obtuvieron correctamente"));
+      } else {
+        response.json(genericResponse.error(null, "Ocurrio un error"));
+      }
+    } else {
+      response.json(genericResponse.success(result, "datos en crudo"))
+    }
   }
 
-  getVersions({ request, response }) {
-      var xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ns="http://schemas.datacontract.org/2004/07/">
+  async getVersions({ request, response }) {
+    var xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ns="http://schemas.datacontract.org/2004/07/">
           <soapenv:Header/>
           <soapenv:Body>
           <tem:Consulta_Versiones>
@@ -235,31 +238,34 @@ class VehicleController {
           </soapenv:Body>
       </soapenv:Envelope>`;
 
-      getData(Env.get('WS_CATALAGOS_URL'), Env.get('WS_CATALAGOS_SOAP_GET_VERSIONS'), xml, (result) => {
-          if (result.status == 1) {
-              if (result.response['s:Envelope']['s:Body']['Consulta_VersionesResponse']['Consulta_VersionesResult']['a:string'] != undefined) {
-                  var data = result.response['s:Envelope']['s:Body']['Consulta_VersionesResponse']['Consulta_VersionesResult']['a:string'],
-                      newData = {
-                          version: []
-                      };
+    let result = await getData(Env.get('WS_CATALAGOS_URL'), Env.get('WS_CATALAGOS_SOAP_GET_VERSIONS'), xml)
+    //  (result) => {
+    if (result.status == 1) {
+      if (result.response['s:Envelope']['s:Body']['Consulta_VersionesResponse']['Consulta_VersionesResult']['a:string'] != undefined) {
+        var data = result.response['s:Envelope']['s:Body']['Consulta_VersionesResponse']['Consulta_VersionesResult']['a:string'],
+          newData = {
+            version: []
+          };
 
-                  if (Array.isArray(data)) {
-                      data.forEach(element => {
-                          newData.version.push(element['_text']);
-                      });
-                  } else
-                      newData.version.push(data['_text']);
+        if (Array.isArray(data)) {
+          data.forEach(element => {
+            newData.version.push(element['_text']);
+          });
+        } else {
+          newData.version.push(data['_text'])
+        }
 
-                  response.json({ status: 1, data: newData });
-              } else
-                  response.json({ status: 0 });
-          } else
-              response.json(result);
-      });
+        return response.json(genericResponse.success(newData, "Se obtuvieron correctamente"));
+      } else {
+        return response.json(genericResponse.error(null, "Ocurrio un error"))
+      }
+    } else {
+      return response.json(genericResponse.success(result, "datos en crudo"))
+    }
   }
 
-  getDescriptions({ request, response }) {
-      var xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ns="http://schemas.datacontract.org/2004/07/">
+  async getDescriptions({ request, response }) {
+    var xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ns="http://schemas.datacontract.org/2004/07/">
           <soapenv:Header/>
           <soapenv:Body>
           <tem:Consulta_Descripciones>
@@ -280,33 +286,33 @@ class VehicleController {
           </soapenv:Body>
       </soapenv:Envelope>`;
 
-      getData(Env.get('WS_CATALAGOS_URL'), Env.get('WS_CATALAGOS_SOAP_GET_DESCRIPTIONS'), xml, (result) => {
-          if (result.status == 1) {
-              if (result.response['s:Envelope']['s:Body']['Consulta_DescripcionesResponse']['Consulta_DescripcionesResult']['a:string'] != undefined) {
-                  var data = result.response['s:Envelope']['s:Body']['Consulta_DescripcionesResponse']['Consulta_DescripcionesResult']['a:string'],
-                      newData = {
-                          description: []
-                      };
+    let result = await getData(Env.get('WS_CATALAGOS_URL'), Env.get('WS_CATALAGOS_SOAP_GET_DESCRIPTIONS'), xml)
+    //  (result) => {
+    if (result.status == 1) {
+      if (result.response['s:Envelope']['s:Body']['Consulta_DescripcionesResponse']['Consulta_DescripcionesResult']['a:string'] != undefined) {
+        var data = result.response['s:Envelope']['s:Body']['Consulta_DescripcionesResponse']['Consulta_DescripcionesResult']['a:string'],
+          newData = {
+            description: []
+          };
 
-                  if (Array.isArray(data)) {
-                      data.forEach(element => {
-                          newData.description.push(element['_text']);
-                      });
-                  } else
-                      newData.description.push(data['_text']);
+        if (Array.isArray(data)) {
+          data.forEach(element => {
+            newData.description.push(element['_text']);
+          });
+        } else
+          newData.description.push(data['_text']);
 
-                  response.json({ status: 1, data: newData });
-              } else
-                  response.json({ status: 0 });
-          } else
-              response.json(result);
-      });
+        return response.json(genericResponse.success(newData, "Se obtuvieron correctamente"));
+      } else
+        return response.json(genericResponse.error(null, "Ocurrio un error"));
+    } else
+      return response.json(genericResponse.success(result, "datos en crudo"));
   }
 
-  saveQuotation({ request, response }) {
-      var quoteInsurance = new QuoteInsuranceModel,
-          data = request.body.data,
-          xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ns="http://schemas.datacontract.org/2004/07/">
+  async saveQuotation({ request, response }) {
+    var quoteInsurance = new QuoteInsuranceModel,
+      data = request.body.data,
+      xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ns="http://schemas.datacontract.org/2004/07/">
               <soapenv:Header/>
               <soapenv:Body>
               <tem:Consulta_Clave_Vehiculo>
@@ -327,32 +333,33 @@ class VehicleController {
               </soapenv:Body>
           </soapenv:Envelope>`;
 
-      getData(Env.get('WS_CATALAGOS_URL'), Env.get('WS_CATALAGOS_SOAP_GET_VEHICLE_KEY'), xml, (result) => {
-          if (result.status == 1) {
-              if (result.response['s:Envelope']['s:Body']['Consulta_Clave_VehiculoResponse']['Consulta_Clave_VehiculoResult']['_text'] != undefined) {
-                  var vehicleKey = result.response['s:Envelope']['s:Body']['Consulta_Clave_VehiculoResponse']['Consulta_Clave_VehiculoResult']['_text'];
+    let result = await getData(Env.get('WS_CATALAGOS_URL'), Env.get('WS_CATALAGOS_SOAP_GET_VEHICLE_KEY'), xml)
+    if (result.status == 1) {
+      if (result.response['s:Envelope']['s:Body']['Consulta_Clave_VehiculoResponse']['Consulta_Clave_VehiculoResult']['_text'] != undefined) {
+        var vehicleKey = result.response['s:Envelope']['s:Body']['Consulta_Clave_VehiculoResponse']['Consulta_Clave_VehiculoResult']['_text'];
 
-                  console.log(vehicleKey)
+        console.log(vehicleKey)
 
-                  data.vehicle_key = vehicleKey;
-                  quoteInsurance.create(data).then((result) => {
-                      result.data = {
-                          vehicle_key: vehicleKey
-                      };
+        data.vehicle_key = vehicleKey;
+        quoteInsurance.create(data).then((result) => {
+          result.data = {
+            vehicle_key: vehicleKey
+          };
 
-                      response.json(result);
-                  }, (err) => {
-                      response.json(err);
-                  });
-              } else
-                  response.json({ status: 0 });
-          } else
-              response.json(result);
-      });
+          return response.json(genericResponse.success(result, "datos en crudo"));
+        }, (err) => {
+          return response.json(err);
+        });
+      } else {
+        return response.json(genericResponse.error(null, "Ocurrio un error"))
+      }
+    } else {
+      return response.json(genericResponse.success(result, "datos en crudo"))
+    }
   }
 
-  getQuote({ request, response }) {
-      var xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ns="http://schemas.datacontract.org/2004/07/">
+  async getQuote({ request, response }) {
+    var xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ns="http://schemas.datacontract.org/2004/07/">
           <soapenv:Header/>
           <soapenv:Body>
           <tem:Cotizar>
@@ -385,55 +392,58 @@ class VehicleController {
           </soapenv:Body>
       </soapenv:Envelope>`;
 
-      getData(Env.get('WS_QUOTATIONS_URL'), Env.get('WS_QUOTATIONS_SOAP_GET_QUOTE'), xml, (result) => {
-          if (result.status == 1) {
-              if (result.response['s:Envelope']['s:Body']['CotizarResponse']['CotizarResult'] != undefined) {
-                  var data = result.response['s:Envelope']['s:Body']['CotizarResponse']['CotizarResult'],
-                      newData = [],
-                      tempObj = {};
+    let result = await getData(Env.get('WS_QUOTATIONS_URL'), Env.get('WS_QUOTATIONS_SOAP_GET_QUOTE'), xml)
+    //  (result) => {
+    if (result.status == 1) {
+      if (result.response['s:Envelope']['s:Body']['CotizarResponse']['CotizarResult'] != undefined) {
+        var data = result.response['s:Envelope']['s:Body']['CotizarResponse']['CotizarResult'],
+          newData = [],
+          tempObj = {};
 
 
-                  if (!data['a:MError']['_text']) {
-                      tempObj.cia = data['a:Cia']['_text'];
-                      tempObj.duty = data['a:Derechos']['_text'];
-                      tempObj.iva = data['a:Iva']['_text'];
-                      tempObj.net_price = data['a:PNeta']['_text'];
-                      tempObj.price_total = data['a:PTotal']['_text'];
-                      tempObj.first_payment = data['a:Rec1']['_text'];
-                      tempObj.payments = data['a:Rec2']['_text'];
-                      tempObj.recharges = data['a:Recargos']['_text'];
+        if (!data['a:MError']['_text']) {
+          tempObj.cia = data['a:Cia']['_text'];
+          tempObj.duty = data['a:Derechos']['_text'];
+          tempObj.iva = data['a:Iva']['_text'];
+          tempObj.net_price = data['a:PNeta']['_text'];
+          tempObj.price_total = data['a:PTotal']['_text'];
+          tempObj.first_payment = data['a:Rec1']['_text'];
+          tempObj.payments = data['a:Rec2']['_text'];
+          tempObj.recharges = data['a:Recargos']['_text'];
 
-                      newData.push(tempObj);
-                  }
+          newData.push(tempObj);
+        }
 
-                  response.json({ status: 1, data: newData });
-              } else
-                  response.json({ status: 0 });
-          } else
-              response.json(result);
-      });
+        return response.json(genericResponse.success(newData, "Se obtuvieron correctamente"));
+      } else {
+        return response.json(genericResponse.error(null, "Ocurrio un error"))
+      }
+    } else {
+      return response.json(genericResponse.success(result, "datos en crudo"))
+    }
   }
 }
 
-function getData(url, action, xml, fn) {
-  console.log("url--->", url)
-  Request.post({
+async function getData(url, action, xml) {
+  return new Promise((resolve, reject) => {
+    request.post({
       url: url,
       headers: {
-          'content-type': 'text/xml;charset=UTF-8',
-          'SOAPAction': action
+        'content-type': 'text/xml;charset=UTF-8',
+        'SOAPAction': action
       },
       body: xml,
       timeout: 1000 * 60 * 10
-  }, (err, result, body) => {
+    }, (err, result, body) => {
       if (err) {
-          console.log(err);
-          fn({ status: 0 });
+        console.log(err);
+        reject(genericResponse.error(null, "Ocurrio un error"))
       } else {
-          var xmlParsed = convert.xml2js(body, { compact: true, spaces: 4 })
-          fn({ status: 1, response: xmlParsed });
+        var xmlParsed = convert.xml2js(body, { compact: true, spaces: 4 })
+        resolve({ status: 1, response: xmlParsed })
       }
-  });
+    })
+  })
 }
 
 module.exports = VehicleController

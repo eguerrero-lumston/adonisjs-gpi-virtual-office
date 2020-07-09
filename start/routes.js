@@ -44,10 +44,23 @@ Route.group(() => {
             [['vehicles.update'], ['UpdateVehicle']]
         ]))
         .apiOnly()
-    Route.get('brands', 'VehicleController.getBrands')
+
+    
+
+
+
 }).prefix('api/v1')
 
-
+Route.group(() => {
+    Route.get('models', 'VehicleController.getModels')
+    Route.get('brands', 'VehicleController.getBrands')
+    Route.get('versions', 'VehicleController.getVersions')
+    Route.get('descriptions', 'VehicleController.getDescriptions')
+    Route.post('quotation', 'VehicleController.saveQuotation')
+    Route.get('quote', 'VehicleController.getQuote')
+})
+    .prefix('api/v1')
+    .middleware([ 'auth' ])
 // .middleware(new Map([
 //     [[ 'show', 'store', 'index', 'update', 'destroy'], ['auth']]
 // ]))

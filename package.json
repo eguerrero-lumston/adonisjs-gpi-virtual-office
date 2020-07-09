@@ -30,7 +30,9 @@
     "@adonisjs/shield": "^1.0.8",
     "@adonisjs/validator": "^5.0.6",
     "aws-sdk": "^2.711.0",
-    "mysql": "^2.18.1"
+    "mysql": "^2.18.1",
+    "request": "^2.88.2",
+    "xml-js": "^1.6.11"
   },
   "devDependencies": {},
   "autoload": {
