@@ -6,6 +6,8 @@
 
 const { validate } = use('Validator')
 const Lead = use('App/Models/Lead')
+const ImportService = use('App/Services/ImportServices')
+const Helpers = use('Helpers')
 const genericResponse = use("App/Utils/GenericResponse")
 const _ = use('lodash')
 
@@ -131,6 +133,27 @@ class LeadController {
       console.log(e)
       return response.json(genericResponse.error(e, 'No existe el lead!'))
     }
+  }
+
+  async import({ request, response }) {
+    // return response.json("import")
+    let upload  = request.file('upload')
+    let fname   = `${new Date().getTime()}.${upload.extname}`
+    let dir     = 'upload/'
+
+    console.log('fname', fname)
+    //move uploaded file into custom folder
+    await upload.move(Helpers.tmpPath(dir), {
+        name: fname
+    })
+
+    if (!upload.moved()) {
+        console.log('error')
+        return (upload.error(), 'Error moving files', 500)
+    }
+    console.log('upload', upload)
+    let send = await ImportService.ImportClassification('tmp/' + dir + fname)
+    console.log(send)
   }
 }
 

@@ -5,19 +5,19 @@ class GenericResponse {
     constructor() {
 
     }
-    success(data, message = 'ok') {
-        // console.log("data", data.pages)
+    success(data, message = 'Se obtuvieron los datos correctamente.') {
+        // console.log('data', data.pages)
         if(data != null && data.pages != null) {
             return {
                 response: true,
                 message,
                 total : data.pages.total || 0,
-                "perPage": data.pages.perPage || 0,
-                "page": data.pages.page || 0,
-                "lastPage": data.pages.lastPage || 0,
-                "data": data.rows || []
+                perPage: data.pages.perPage || 0,
+                page: data.pages.page || 0,
+                lastPage: data.pages.lastPage || 0,
+                data: data.rows || []
             }
-        }  
+        }
         return {
             response: true,
             message,
@@ -26,7 +26,7 @@ class GenericResponse {
 
     }
 
-    error(error, message = "error") {
+    error(error, message = 'Ocurrio un error.') {
         let errorMessage = message;
 
         if(error != null && error.errors) {

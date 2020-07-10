@@ -25,6 +25,7 @@ Route.group(use('App/Routes/Logs')).prefix('api/v1/logs').middleware('jwtAuth')
 Route.group(use('App/Routes/Vehicle')).prefix('api/v1').middleware([ 'jwtAuth' ])
 
 Route.group(() => {
+    //      users
     Route.resource('users', 'UserController')
         .middleware(new Map([
             [[ 'show', 'create', 'index', 'update', 'destroy'], ['jwtAuth']]
@@ -33,30 +34,37 @@ Route.group(() => {
             [['users.store'], ['StoreUser']],
             [['users.update'], ['UpdateUser']]
         ]))
-        .apiOnly()
     Route.post('users/login', 'UserController.login')
 
+    //      leads
     Route.resource('leads', 'LeadController')
         .middleware([ 'jwtAuth' ])
         .validator(new Map([
             [['leads.store'], ['StoreLead']],
             [['leads.update'], ['UpdateLead']]
         ]))
-        .apiOnly()
+    Route.post('leads/massive', 'LeadController.import')
 
+    //      vehicles 
     Route.resource('vehicles', 'VehicleController')
         .middleware([ 'jwtAuth' ])
         .validator(new Map([
             [['vehicles.store'], ['StoreVehicle']],
             [['vehicles.update'], ['UpdateVehicle']]
         ]))
-        .apiOnly()
-
+    //      sellers 
+    Route.resource('sellers', 'SellerController')
+        .middleware([ 'jwtAuth' ])
+        .validator(new Map([
+            [['sellers.store'], ['StoreSeller']],
+            [['sellers.update'], ['UpdateSeller']]
+        ]))
+    Route.put('sellers/blocked', 'SellerController.block')
+        .middleware([ 'jwtAuth' ])
     
 
-
-
-}).prefix('api/v1')
+})
+    .prefix('api/v1')
 
 // .middleware(new Map([
 //     [[ 'show', 'store', 'index', 'update', 'destroy'], ['auth']]

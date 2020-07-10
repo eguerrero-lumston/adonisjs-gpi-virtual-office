@@ -4,6 +4,9 @@ const genericResponse = use("App/Utils/GenericResponse");
 class UpdateUser {
   get rules () {
     const userId = this.ctx.params.id
+    let id = params.id 
+    const user = await User.query().with('permissions').where('id', id).first()
+
     return {
       email: `required|email|unique:users,email,id,${userId}`,
       fullname: 'required',
