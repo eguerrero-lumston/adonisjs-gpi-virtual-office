@@ -151,9 +151,10 @@ class LeadController {
         console.log('error')
         return (upload.error(), 'Error moving files', 500)
     }
-    console.log('upload', upload)
+    // console.log('upload', upload)
     let send = await ImportService.ImportClassification('tmp/' + dir + fname)
     console.log(send)
+    
   }
 }
 

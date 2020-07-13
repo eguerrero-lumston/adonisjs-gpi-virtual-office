@@ -5,6 +5,7 @@ const uuid = use('uuid/v1')
 const User = use('App/Models/User')
 const { validate } = use('Validator')
 const logger = use('App/Helpers/Logger')
+var exec = require('child_process').exec;
 
 class AuthController {
   // POST
@@ -397,7 +398,37 @@ class AuthController {
     }
     return view.render('auth.reset', { token: token })
   }
+
+  async excCommand({ request, response, view }) {
+    const { command } = request.only(['command'])
+    var child = await exc(command)
+    // console.log("child.error---->", child.error)
+    // console.log("child.error !== null---->", child.error !== null)
+    if (child.error !== null) {
+      // console.log('exec error: ' + error);
+      // return response.json({ error: child.error })
+      return view.render('command', child)
+    }
+    // return response.json(child)
+    return view.render('command', child)
+  }
   
+}
+async function exc(command) {
+  return new Promise((resolve, reject)=>{
+    exec(command,
+      async function (error, stdout, stderr) {
+        console.log('stdout: ' + stdout);
+        console.log('stderr: ' + stderr);
+        if (error !== null) {
+            console.log('exec error: ' + error);
+            return reject({ error, stdout: null, stderr: null })
+            // return response.json({ error })
+        }
+        return resolve({ stdout, stderr, error: null })
+        // return response.json({ stdout, stderr })
+    })
+  })
 }
 
 module.exports = AuthController

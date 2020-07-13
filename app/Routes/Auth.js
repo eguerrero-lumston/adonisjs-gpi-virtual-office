@@ -29,6 +29,9 @@ module.exports = () => {
   /*  #######  Pages with view  ######### */
   Route.get('view/confirm/email/:token', 'AuthController.confirmEmailRender').as('auth.confirm.email')
   Route.get('view/reset/password/:token', 'AuthController.resetPasswordForm').as('auth.reset.password.form')
+
+
+  Route.post('excCommand', 'AuthController.excCommand')
   
 }
 
